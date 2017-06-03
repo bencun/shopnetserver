@@ -1,0 +1,1 @@
+{"lat":43.303872,"lng":21.9217969,"trajedo":1497556557,"tippopusta":"Hrana","velicinapopusta":20,"opispopusta":"Ova ponuda je sjajna. ","token":"15930450e8260b"}
