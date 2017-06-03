@@ -1,3 +1,5 @@
 *.txt
 shopnetserver.sublime-project
 shopnetserver.sublime-workspace
+slike/
+slike/*.*
