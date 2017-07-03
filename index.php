@@ -76,7 +76,7 @@
 
 	$app->get('/tipovi', function($request, $response, $args){
 		$pdo = $this->database;
-		$stmt = $pdo->prepare('SELECT * FROM tippopusta;');
+		$stmt = $pdo->prepare('SELECT * FROM tippopusta ORDER BY id ASC;');
 		$stmt->execute();
 		$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 		return $response->withJson($rows, 200);
@@ -289,6 +289,32 @@
 			return $response->withStatus(400);
 		return $response;
 	});
+	$app->post('/popustipretraga', function($request, $response, $args){
+		$rawData = urldecode($request->getBody());
+		$data = json_decode($rawData, true);
+
+		$token = $data["token"];
+		$query = $data["upit"];
+		$query = '%'.$query.'%';
+		
+		$jsonresponse = array();
+
+		//proveri token
+		$pdo = $this->database;
+		$stmt = $pdo->prepare('SELECT * FROM korisnik WHERE token = ?');
+		$stmt->execute([$token]);
+		$row = $stmt->fetch();
+		if($row){
+			$stmt = $pdo->prepare('SELECT * FROM popust INNER JOIN tippopusta ON popust.tippopusta = tippopusta.id WHERE (tippopusta.naziv LIKE :query) OR (popust.opispopusta LIKE :query);');
+			$stmt->bindParam(':query', $query, PDO::PARAM_STR);
+			$stmt->execute();
+			$rows = $stmt->fetchAll();
+			return $response->withJson($rows, 200, JSON_NUMERIC_CHECK);
+		}
+		else
+			return $response->withStatus(400);
+		return $response;
+	});
 	$app->post('/prijatelji', function($request, $response, $args){
 		$rawData = urldecode($request->getBody());
 		$data = json_decode($rawData, true);
@@ -320,12 +346,16 @@
 					$stmt->execute([$prijateljID]);
 					$rowPrijatelj = $stmt->fetch();
 					if($rowPrijatelj){
+						$stmtLajkovi = $pdo->prepare("SELECT count(*) FROM lajk INNER JOIN popust ON lajk.popust = popust.id WHERE popust.profil = ?");
+						$stmtLajkovi->execute([$prijateljID]);
+						$brojPoena = $stmtLajkovi->fetchColumn();
+
 						$prijatelj = array();
 						$prijatelj["id"] = $rowPrijatelj["id"];
 						$prijatelj["korime"] = $rowPrijatelj["korime"];
 						$prijatelj["ime"] = $rowPrijatelj["ime"];
 						$prijatelj["prezime"] = $rowPrijatelj["prezime"];
-						$prijatelj["poeni"] = $rowPrijatelj["poeni"];
+						$prijatelj["poeni"] = $brojPoena;
 						$prijatelj["loklat"] = $rowPrijatelj["loklat"];
 						$prijatelj["loklng"] = $rowPrijatelj["loklng"];
 						$prijatelj["lokvreme"] = $rowPrijatelj["lokvreme"];
@@ -349,6 +379,35 @@
 		return $response;
 	});
 
+	$app->post('/lajk', function($request, $response, $args){
+		$rawData = urldecode($request->getBody());
+		$data = json_decode($rawData, true);
+
+		$token = $data["token"];
+		$jsonresponse = array();
+
+		//proveri token
+		$pdo = $this->database;
+		$stmt = $pdo->prepare('SELECT * FROM korisnik WHERE token = ?');
+		$stmt->execute([$token]);
+		$row = $stmt->fetch();
+		if($row){
+			$userID = $row['id'];
+			$popustID = $data['id'];
+			
+			$stmt = $pdo->prepare("SELECT * FROM lajk WHERE profil = ? AND popust = ?");
+			$stmt->execute([$userID, $popustID]);
+			$redLajk = $stmt->fetch();
+			if(!$redLajk){
+				$stmt = $pdo->prepare("INSERT INTO lajk (profil, popust) VALUES (?, ?)");
+				$stmt->execute([$userID, $popustID]);
+				return $response->withStatus(200);
+			}
+		}
+		else
+			return $response->withStatus(400);
+		return $response;
+	});
 
 	$app->post('/logout', function($request, $response, $args){
 		$rawData = urldecode($request->getBody());

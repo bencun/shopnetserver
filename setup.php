@@ -55,12 +55,11 @@
 		CONSTRAINT fk_tippopusta FOREIGN KEY (tippopusta) REFERENCES tippopusta(id)
 	);';
 
-	$queryKomentar = 'CREATE TABLE komentar(
+	$queryLajk = 'CREATE TABLE lajk(
 		id INT UNSIGNED NOT NULL AUTO_INCREMENT,
 		profil INT UNSIGNED NOT NULL,
 		popust INT UNSIGNED NOT NULL,
-		ocena INT UNSIGNED NOT NULL,
-		opis TEXT,
+		
 		CONSTRAINT pk_id PRIMARY KEY (id),
 		CONSTRAINT fk_profil FOREIGN KEY (profil) REFERENCES korisnik(id),
 		CONSTRAINT fk_popust FOREIGN KEY (popust) REFERENCES popust(id)
@@ -85,7 +84,7 @@
 	$pdo->query($queryKorisnik);
 	$pdo->query($queryPrijateljSa);
 	$pdo->query($queryPopust);
-	$pdo->query($queryKomentar);
+	$pdo->query($queryLajk);
 
 	foreach ($tipoviPopusta as $popust) {
 		$stmt = $pdo->prepare('INSERT INTO tippopusta (naziv) VALUES (?)');
