@@ -346,9 +346,12 @@
 					$stmt->execute([$prijateljID]);
 					$rowPrijatelj = $stmt->fetch();
 					if($rowPrijatelj){
+						$stmtLajkovi = $pdo->prepare("SELECT count(*) FROM popust WHERE profil = ?");
+						$stmtLajkovi->execute([$prijateljID]);
+						$brojPoena = 5 * $stmtLajkovi->fetchColumn();
 						$stmtLajkovi = $pdo->prepare("SELECT count(*) FROM lajk INNER JOIN popust ON lajk.popust = popust.id WHERE popust.profil = ?");
 						$stmtLajkovi->execute([$prijateljID]);
-						$brojPoena = $stmtLajkovi->fetchColumn();
+						$brojPoena += $stmtLajkovi->fetchColumn();
 
 						$prijatelj = array();
 						$prijatelj["id"] = $rowPrijatelj["id"];
@@ -432,9 +435,7 @@
 		return $response->getBody()->write($data["slika"]);
 	});
 	$app->get('/test', function($request, $response, $args){
-		$podaci = urldecode($request->getBody());
-		//file_put_contents('testfajl.txt', $podaci);
-		return $response->getBody()->write($podaci);
+		return $response->getBody()->write("Sve radi");
 	});
 	
 	//run the app
